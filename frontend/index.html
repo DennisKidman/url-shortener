@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="URL Shortener is a free tool to shorten a URL or reduce a link. Use our URL Shortener to create a shortened link making it easy to remember.">
+    <title>URL Shorteners</title>
+</head>
+
+<body>
+    <h1>URL Shortener</h1>
+    <form action="http://localhost:4000/shorten" method="POST">
+        <input type="text" id="urlInput" name="url" placeholder="Enter URL">
+        <button type="submit">Shorten</button>
+    </form>
+
+    <div id="shortenedUrlContainer" style="display: none;">
+        <p id="shortenedUrl"></p>
+        <button id="copyButton">Copy</button>
+    </div>
+
+    <div id="savedUrlsContainer">
+        <h2>Saved URLs</h2>
+        <ul id="savedUrlsList"></ul>
+        <button id="clearAllButton">Clear All</button>
+    </div>
+
+    <script>
+        const form = document.querySelector('form');
+        const shortenedUrlContainer = document.getElementById('shortenedUrlContainer');
+        const shortenedUrl = document.getElementById('shortenedUrl');
+        const copyButton = document.getElementById('copyButton');
+        const savedUrlsList = document.getElementById('savedUrlsList');
+        const clearAllButton = document.getElementById('clearAllButton');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value;
+
+            const response = await fetch('http://localhost:4000/shorten', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                shortenedUrl.textContent = data.shortenedUrl;
+                shortenedUrlContainer.style.display = 'block';
+
+                // Save URL to localStorage
+                const savedUrls = JSON.parse(localStorage.getItem('savedUrls')) || [];
+                savedUrls.push(data.shortenedUrl);
+                localStorage.setItem('savedUrls', JSON.stringify(savedUrls));
+
+                // Add URL to savedUrlsList
+                const listItem = document.createElement('li');
+                listItem.textContent = data.shortenedUrl;
+                savedUrlsList.appendChild(listItem);
+            } else {
+                alert(data.error);
+            }
+        });
+
+        copyButton.addEventListener('click', () => {
+            const range = document.createRange();
+            range.selectNode(shortenedUrl);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            alert('Copied to clipboard!');
+        });
+
+        clearAllButton.addEventListener('click', () => {
+            // Clear all saved URLs from localStorage
+            localStorage.removeItem('savedUrls');
+            savedUrlsList.innerHTML = '';
+        });
+
+        // Load saved URLs from localStorage on page load
+        window.addEventListener('load', () => {
+            const savedUrls = JSON.parse(localStorage.getItem('savedUrls')) || [];
+            savedUrls.forEach(url => {
+                const listItem = document.createElement('li');
+                listItem.textContent = url;
+                savedUrlsList.appendChild(listItem);
+            });
+        });
+    </script>
+</body>
+
+</html>
