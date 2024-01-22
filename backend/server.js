@@ -28,7 +28,9 @@ const Link = sequelize.define('Link', {
 });
 
 // Create table if it doesn't exist
-Link.sync();
+(async () => {
+    await Link.sync();
+})();
 
 // Middleware to parse JSON body
 app.use(express.json());
@@ -45,13 +47,13 @@ app.post('/shorten', async (req, res) => {
 
     try {
         // Create a new link record in the database
-        await Link.create({
+        const link = await Link.create({
             id,
             originalUrl: url,
         });
 
         // Return the shortened URL to the user
-        res.json({ shortenedUrl: `http://localhost:${port}/${id}` });
+        res.json({ shortenedUrl: `http://localhost:${port}/${link.id}` });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
